@@ -15,10 +15,10 @@ const aiLoadingSpinner = document.getElementById('aiLoadingSpinner');
 const backBtn = document.getElementById('backBtn');
 
 // --- App State Management ---
-let appState = 'IDLE'; 
-let currentView = 'home-view'; 
+let appState = 'IDLE';
+let currentView = 'home-view';
 let repCounter = 0;
-let stage = null; 
+let stage = null;
 let feedback = '';
 let complimentInterval;
 let isWarmupComplete = false;
@@ -145,7 +145,7 @@ async function onResults(results) {
         if (appState === 'WARMUP') {
              handleWarmup(poseLandmarks, handLandmarks);
         } else if (appState !== 'IDLE' && appState !== 'SUCCESS') {
-            handleExercise(poseLandmarks);
+             handleExercise(poseLandmarks);
         }
     } catch (error) { /* Silently ignore errors */ }
     
@@ -431,30 +431,40 @@ function handleExercise(landmarks) {
             [up_angle, down_angle, up_stage, down_stage, exName] = [40, 160, "up", "down", "BICEP CURLS"];
             const leftElbowAngle = calculateAngle(lm[11], lm[13], lm[15]);
             const rightElbowAngle = calculateAngle(lm[12], lm[14], lm[16]);
-            const leftArmUp = leftElbowAngle < up_angle;
-            const rightArmUp = rightElbowAngle < up_angle;
+
+            // Define clear conditions for both arms
+            const bothArmsUp = leftElbowAngle < up_angle && rightElbowAngle < up_angle;
             const bothArmsDown = leftElbowAngle > down_angle && rightElbowAngle > down_angle;
+
+            // Set the 'down' stage when arms are fully extended
             if (bothArmsDown) {
                 stage = down_stage;
-                feedback = "BICEP CURLS";
+                feedback = "BICEP CURLS"; // Reset feedback when in position
             }
-            if ((leftArmUp || rightArmUp) && stage === down_stage) {
+
+            // --- Repetition Counting Logic ---
+            // Only count a rep if BOTH arms are up AND the last stage was 'down'
+            if (bothArmsUp && stage === down_stage) {
                 stage = up_stage;
                 repCounter++;
                 workoutSummary[exName]++;
                 speak(repCounter);
                 motivate(repCounter);
-                if (leftArmUp && !rightArmUp && rightElbowAngle > up_angle + 20) {
+            } 
+            // --- Form Feedback Logic ---
+            // Provide feedback if one arm is lagging, without counting a rep
+            else if (stage === down_stage) {
+                if (leftElbowAngle < up_angle && rightElbowAngle > up_angle + 20) {
                     feedback = "LIFT RIGHT ARM HIGHER";
-                } else if (!leftArmUp && rightArmUp && leftElbowAngle > up_angle + 20) {
+                } else if (rightElbowAngle < up_angle && leftElbowAngle > up_angle + 20) {
                     feedback = "LIFT LEFT ARM HIGHER";
                 }
             }
             break;
         case "PUSHUPS":
             [up_angle, down_angle, up_stage, down_stage, exName] = [90, 160, "down", "up", "PUSHUPS"];
-             const leftPushupAngle = calculateAngle(lm[11], lm[13], lm[15]);
-             const rightPushupAngle = calculateAngle(lm[12], lm[14], lm[16]);
+              const leftPushupAngle = calculateAngle(lm[11], lm[13], lm[15]);
+              const rightPushupAngle = calculateAngle(lm[12], lm[14], lm[16]);
             if (leftPushupAngle > down_angle && rightPushupAngle > down_angle) stage = down_stage;
             if (leftPushupAngle < up_angle && rightPushupAngle < up_angle && stage === down_stage) {
                 stage = up_stage;
