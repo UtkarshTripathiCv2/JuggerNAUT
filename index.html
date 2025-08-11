@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JaggerNAUT - AI Fitness Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="text-gray-200">
+
+<!-- Navigation Bar (Visible on all views) -->
+<nav class="absolute top-0 left-0 right-0 p-4 z-30 flex justify-between items-center">
+    <h1 class="text-2xl font-black tracking-tighter accent-text">JaggerNAUT</h1>
+    <div class="dropdown">
+        <button class="font-bold py-2 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition">Health Tools 🥗</button>
+        <div class="dropdown-content">
+            <a href="#" id="bmiBtn">BMI Calculator</a>
+            <a href="#" id="calorieBtn">Calorie Calculator</a>
+            <a href="#" id="dietBtn">AI Diet Planner</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Back Button (Contextual) -->
+<button id="backBtn" class="action-button fixed top-16 left-4 bg-gray-700 text-white font-bold p-2 rounded-full z-40 hidden">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+</button>
+
+<!-- Home View -->
+<div id="home-view" class="view p-4">
+    <div class="text-center">
+        <h1 class="text-5xl md:text-7xl font-black tracking-tighter accent-text animate-fade-in-down">JaggerNAUT</h1>
+        <p class="text-2xl md:text-3xl text-gray-300 mt-4 animate-fade-in-up">Let's Get Warmed Up! 🔥</p>
+        <button id="startWarmupBtn" class="action-button w-full max-w-xs mt-12 bg-orange-600 text-white font-bold py-4 px-6 rounded-xl text-xl animate-fade-in-up animate-pulse-start">
+            Start Warmup
+        </button>
+    </div>
+</div>
+
+<!-- Exercise View -->
+<div id="exercise-view" class="view hidden">
+    <div class="video-container">
+        <video id="webcam" class="hidden" playsinline></video>
+        <canvas id="output_canvas"></canvas>
+        <div id="feedbackBox" class="feedback-box text-center"><p id="feedbackText" class="text-lg sm:text-xl lg:text-2xl font-bold accent-text"></p></div>
+        <div id="repCounterBox" class="rep-counter-box">
+            <p class="text-base sm:text-lg font-semibold text-gray-400">REPS</p>
+            <p id="repCountText" class="text-4xl sm:text-5xl font-black text-white">0</p>
+        </div>
+        <div id="complimentBox" class="absolute top-1/4 left-1/2 -translate-x-1/2 text-2xl font-bold text-white" style="text-shadow: 0 0 8px black; opacity: 0;"></div>
+        <div id="successOverlay" class="success-overlay"><h2 class="text-3xl sm:text-5xl font-black text-white tracking-wider text-center" style="text-shadow: 0 0 10px black;">LIGHT WEIGHT BABY! 🚀</h2></div>
+        <div id="precautionOverlay" class="precaution-overlay"><h2 class="text-2xl sm:text-4xl font-bold text-black tracking-wider text-center">PRECAUTION:<br>Perform neck movements slowly & carefully.</h2></div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 z-20 p-4 flex justify-center items-center gap-4 bg-gradient-to-t from-black/50 to-transparent">
+        <div id="warmup-controls" class="hidden w-full flex justify-between max-w-md">
+            <button id="prevExBtn" class="action-button bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Previous</button>
+            <button id="nextExBtn" class="action-button bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm">Next</button>
+        </div>
+        <div id="exercise-controls" class="hidden">
+            <button id="finishSetBtn" class="action-button bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-lg text-lg">Finish Set ✅</button>
+        </div>
+    </div>
+</div>
+
+<!-- Menu View -->
+<div id="menu-view" class="view hidden p-4">
+    <div class="text-center w-full max-w-lg">
+        <h1 class="text-5xl md:text-6xl font-black tracking-tight text-white animate-fade-in-down">Welcome to Heaven</h1>
+        <p id="menu-subtitle" class="text-xl text-gray-400 mt-2 animate-fade-in-down">Choose your poison. 💪</p>
+        <div id="exercise-menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-12 w-full mx-auto animate-fade-in-up">
+            <button data-exercise="BICEP_CURLS" class="action-button w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-4 rounded-lg text-xl">Bicep Curls</button>
+            <button data-exercise="SHOULDER_PRESS" class="action-button w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-4 rounded-lg text-xl">Shoulder Press</button>
+            <button data-exercise="SQUATS" class="action-button w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-4 rounded-lg text-xl">Squats</button>
+            <button data-exercise="PUSHUPS" class="action-button w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-4 rounded-lg text-xl">Pushups</button>
+            <button data-exercise="PULLUPS" class="action-button w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-4 rounded-lg text-xl">Pull-ups</button>
+        </div>
+        <button id="reportBtn" class="action-button w-full max-w-sm mx-auto mt-8 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg animate-fade-in-up">View Report</button>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="reportModal" class="modal"><div class="panel p-6 sm:p-8 rounded-2xl w-full max-w-md"><h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center accent-text">Workout Summary 📊</h2><div id="reportContent" class="space-y-4 text-lg"></div><div id="aiFeedbackSection" class="mt-6 hidden"><h3 class="text-xl font-bold accent-text mb-2">AI Coach Feedback</h3><div id="aiFeedbackResult" class="p-4 bg-gray-800 rounded-lg text-gray-300 text-sm whitespace-pre-wrap"></div></div><div id="aiLoadingSpinner" class="hidden text-center my-4"><p class="text-gray-400 animate-pulse">✨ Your AI coach is thinking...</p></div><div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4"><button id="getAiFeedbackBtn" class="action-button bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg col-span-1 sm:col-span-3">✨ Get AI Feedback</button><button id="printBtn" class="action-button bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Print</button><button data-modal-close="reportModal" class="action-button bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg col-span-1 sm:col-span-2">Close</button></div></div></div>
+<div id="bmiModal" class="modal"><div class="panel p-6 sm:p-8 rounded-2xl w-full max-w-md"><h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center accent-text">BMI Calculator</h2><div class="space-y-4"><div><label class="block mb-1 text-sm font-medium text-gray-400">Height (cm)</label><input id="bmiHeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Weight (kg)</label><input id="bmiWeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><button id="calculateBmiBtn" class="action-button w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Calculate</button><div id="bmiResult" class="text-center pt-4"></div></div><div class="mt-8"><button data-modal-close="bmiModal" class="action-button w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Close</button></div></div></div>
+<div id="calorieModal" class="modal"><div class="panel p-6 sm:p-8 rounded-2xl w-full max-w-md"><h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center accent-text">Daily Calorie Calculator</h2><div class="space-y-3"><div><label class="block mb-1 text-sm font-medium text-gray-400">Age</label><input id="calorieAge" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Height (cm)</label><input id="calorieHeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Weight (kg)</label><input id="calorieWeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Gender</label><select id="calorieGender" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"><option value="male">Male</option><option value="female">Female</option></select></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Activity Level</label><select id="calorieActivity" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"><option value="1.2">Sedentary</option><option value="1.375">Lightly Active</option><option value="1.55">Moderately Active</option><option value="1.725">Very Active</option><option value="1.9">Extra Active</option></select></div><button id="calculateCalorieBtn" class="action-button w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg !mt-6">Calculate</button><div id="calorieResult" class="text-center pt-4"></div></div><div class="mt-8"><button data-modal-close="calorieModal" class="action-button w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Close</button></div></div></div>
+<div id="dietModal" class="modal"><div class="panel p-6 sm:p-8 rounded-2xl w-full max-w-lg"><h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center accent-text">AI Diet Planner 🥗</h2><div class="space-y-3"><div><label class="block mb-1 text-sm font-medium text-gray-400">Age</label><input id="dietAge" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Height (cm)</label><input id="dietHeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Weight (kg)</label><input id="dietWeight" type="number" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Gender</label><select id="dietGender" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"><option value="male">Male</option><option value="female">Female</option></select></div><div><label class="block mb-1 text-sm font-medium text-gray-400">Primary Goal</label><select id="dietGoal" class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white"><option value="Weight Loss">Weight Loss</option><option value="Muscle Gain">Muscle Gain</option><option value="Maintenance">Maintenance</option></select></div><button id="getAiDietBtn" class="action-button w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg !mt-6">🚀 Generate My Plan</button><div id="dietLoadingSpinner" class="hidden text-center my-4"><p class="text-gray-400 animate-pulse">🥗 Cooking up your personalized plan...</p></div><div id="dietResultSection" class="mt-4 hidden"><div id="dietResult" class="p-4 bg-gray-800 rounded-lg text-gray-300 text-sm whitespace-pre-wrap max-h-60 overflow-y-auto"></div></div><p class="text-xs text-gray-500 mt-4 text-center"><strong>Disclaimer:</strong> This AI-generated plan is for informational purposes only. It is not medical advice. Consult with a registered dietitian or healthcare professional before making significant changes to your diet.</p></div><div class="mt-6"><button data-modal-close="dietModal" class="action-button w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Close</button></div></div></div>
+
+<script type="module" src="client.js"></script>
+</body>
+</html>
